@@ -13,9 +13,15 @@ import { LayoutDashboard, PenBox } from "lucide-react";
 const Header = () => {
   return (
     <div className="fixed top-0 w-full bg-white/50 backdrop-blur-md z-50 border-b ">
-      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <nav className="container mx-auto px-10 py-4 flex justify-between items-center">
         <Link href="/">
-          <Image src={"/logo.png"} alt="logo masjid" width={65} height={300} />
+          <Image
+            src={"/logo-finall.png"}
+            alt="logo masjid"
+            width={100}
+            height={300}
+            className="h-14 w-auto object-contain"
+          />
         </Link>
 
         <div className="items-center space-x-4 flex ">
@@ -40,7 +46,7 @@ const Header = () => {
 
           <SignedOut>
             <SignInButton forceRedirectUrl={"/dashboard"}>
-              <Button variant={"outline"}>Login</Button>
+              <Button className="bg-yellow-500">Login</Button>
             </SignInButton>
           </SignedOut>
           <SignedIn>

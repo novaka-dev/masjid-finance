@@ -8,10 +8,10 @@ const HeroSection = () => {
   return (
     <div className="pb-20 px-4">
       <div className="text-center container mx-auto">
-        <h1 className="text-5xl md:text-5xl lg:text-[80px] font-extrabold pb-3 text-black">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-[90px] font-extrabold pb-3 text-black">
           Keuangan Masjid Al Kautsar <br /> Transparan & Akurat
         </h1>
-        <p className="text-xl mb-8 max-w-2xl mx-auto text-gray-700">
+        <p className="text-xs sm:text-sm md:text-base lg:text-xl mb-8 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl mx-auto text-gray-700">
           Sistem keuangan modern untuk transparansi penuh dalam pemasukan dan
           pengeluaran Masjid Al Kautsar SMKN 2 Kota Bekasi.
         </p>

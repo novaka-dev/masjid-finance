@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/data/landing.ts", "src/lib/checkUser.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/data/landing.ts", "src/lib/checkUser.ts", "actions/dashboard.js"],
   "exclude": ["node_modules"]
 }

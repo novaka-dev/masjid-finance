@@ -22,6 +22,17 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/data/landing.ts", "src/lib/checkUser.ts", "src/actions/dashboard.js"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/data/landing.ts",
+    "src/lib/checkUser.ts",
+    "src/actions/dashboard.js",
+    "src/app/api/seed/route.js",
+    "src/actions/seed.js",
+    "src/lib/prisma.ts"
+, "src/app/(main)/transaction/_components/transaction-form.tsx"  ],
   "exclude": ["node_modules"]
 }

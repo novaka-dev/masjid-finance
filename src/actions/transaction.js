@@ -47,7 +47,7 @@ export async function createTransaction(data) {
       const newTransaction = await tx.transaction.create({
         data: {
           ...data,
-          descriptions: data.description,
+          descriptions: data.descriptions,
           userId: user.id, // Perbaikan: gunakan `userId`, bukan `useId`
         },
       });

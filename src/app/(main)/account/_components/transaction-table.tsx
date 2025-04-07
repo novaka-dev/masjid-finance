@@ -184,6 +184,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     setSelectedIds([]);
   };
 
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
   return (
     <div className="space-y-4">
       {deleteLoading && (
@@ -343,8 +351,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       color: transaction.type === "EXPENSE" ? "red" : "green",
                     }}
                   >
-                    {transaction.type === "EXPENSE" ? "-" : "+"} Rp.{" "}
-                    {transaction.amount.toFixed(2)}
+                    {transaction.type === "EXPENSE" ? "-" : "+"}
+                    {formatRupiah(transaction.amount)}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

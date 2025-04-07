@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import TransactionTable from "../_components/transaction-table";
 import { BarLoader } from "react-spinners";
+import AccountChart from "../_components/account-chart";
 
 interface AccountPageProps {
   params: {
@@ -19,6 +20,14 @@ export default async function AccountPage({ params }: AccountPageProps) {
   }
 
   const { transactions, ...account } = accountData;
+
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
 
   return (
     <div className="px-5 space-y-8 ">
@@ -35,7 +44,7 @@ export default async function AccountPage({ params }: AccountPageProps) {
 
         <div className="text-right pb-2">
           <div className="text-xl sm:text-2xl font-bold">
-            Rp. {(account.balance ?? 0).toFixed(2)}
+            {formatRupiah(account.balance ?? 0)}
           </div>
           <p className="text-sm text-muted-foreground">
             {account._count.transactions} Transactions
@@ -43,6 +52,14 @@ export default async function AccountPage({ params }: AccountPageProps) {
         </div>
       </div>
 
+      {/* Chart section */}
+      <Suspense
+        fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
+      >
+        <AccountChart transactions={transactions} />
+      </Suspense>
+
+      {/* Transaction Table */}
       <Suspense
         fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
       >

@@ -71,7 +71,12 @@ const AccountCard: React.FC<{ account: Account }> = ({ account }) => {
           />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">Rp. {balance.toFixed(2)}</div>
+          <div className="text-2xl font-bold">
+            {balance.toLocaleString("id-ID", {
+              style: "currency",
+              currency: "IDR",
+            })}
+          </div>
 
           <p className="text-xs text-muted-foreground">
             {type.charAt(0) + type.slice(1).toLowerCase()} Account

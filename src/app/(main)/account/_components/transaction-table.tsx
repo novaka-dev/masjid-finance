@@ -1,12 +1,12 @@
 "use client";
 
+import { bulkDeleteTransactions } from "@/actions/accounts";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { categoryColors } from "@/data/category";
+import useFetch from "@/hooks/use-fetch";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -37,7 +38,9 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BarLoader } from "react-spinners";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -56,7 +59,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
 }) => {
   const router = useRouter();
-  const [selectedId, setSelectedId] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     field: keyof Transaction;
     direction: "asc" | "desc";
@@ -118,7 +121,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   const handleSelect = (id: string) => {
-    setSelectedId((current) =>
+    setSelectedIds((current) =>
       current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id]
@@ -126,23 +129,48 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   const handleAllSelect = () => {
-    setSelectedId((current) =>
+    setSelectedIds((current) =>
       current.length === transactions.length
         ? []
         : transactions.map((t) => t.id)
     );
   };
 
-  const handleBulkDelete = () => {};
+  const {
+    loading: deleteLoading,
+    fn: deleteFn,
+    data: deleted,
+  } = useFetch(bulkDeleteTransactions);
+
+  const handleBulkDelete = async () => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${selectedIds.length} transactions?`
+      )
+    )
+      return;
+
+    deleteFn(selectedIds);
+  };
+
+  useEffect(() => {
+    if (deleted && !deleteLoading) {
+      toast.error("Transactions deleted successfully");
+      setSelectedIds([]);
+    }
+  }, [deleted, deleteLoading]);
 
   const handleClearFilter = () => {
     setSearchTerm("");
     setTypeFilter("");
-    setSelectedId([]);
+    setSelectedIds([]);
   };
 
   return (
     <div className="space-y-4">
+      {deleteLoading && (
+        <BarLoader className="mt-4" width={"100%"} color="#9333ea" />
+      )}
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -166,11 +194,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </SelectContent>
           </Select>
 
-          {selectedId.length > 0 && (
+          {selectedIds.length > 0 && (
             <div className="flex items-center gap-2">
               <Button variant={"destructive"} onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected ({selectedId.length})
+                Delete Selected ({selectedIds.length})
               </Button>
             </div>
           )}
@@ -198,7 +226,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 <Checkbox
                   onCheckedChange={handleAllSelect}
                   checked={
-                    selectedId.length === transactions.length &&
+                    selectedIds.length === transactions.length &&
                     transactions.length > 0
                   }
                 />
@@ -265,7 +293,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                   <TableCell>
                     <Checkbox
                       onCheckedChange={() => handleSelect(transaction.id)}
-                      checked={selectedId.includes(transaction.id)}
+                      checked={selectedIds.includes(transaction.id)}
                     />
                   </TableCell>
                   <TableCell>
@@ -299,7 +327,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel
+                        <DropdownMenuItem
                           onClick={() =>
                             router.push(
                               `/transaction/create?edit=${transaction.id}`
@@ -307,9 +335,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                           }
                         >
                           Edit
-                        </DropdownMenuLabel>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteFn([transaction.id])}
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

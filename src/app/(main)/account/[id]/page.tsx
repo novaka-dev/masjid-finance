@@ -1,3 +1,5 @@
+// src/app/(main)/account/[id]/page.tsx
+
 import { getAccountWithTransactions } from "@/actions/accounts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -10,12 +12,12 @@ interface AccountPageProps {
   };
 }
 
-const AccountPage = async ({ params }: AccountPageProps) => {
+export default async function AccountPage({ params }: AccountPageProps) {
   const accountData = await getAccountWithTransactions(params.id);
   if (!accountData) {
     notFound();
   }
-  // Render your component
+
   const { transactions, ...account } = accountData;
 
   return (
@@ -33,7 +35,7 @@ const AccountPage = async ({ params }: AccountPageProps) => {
 
         <div className="text-right pb-2">
           <div className="text-xl sm:text-2xl font-bold">
-            Rp. {account.balance.toFixed(2)}
+            Rp. {(account.balance ?? 0).toFixed(2)}
           </div>
           <p className="text-sm text-muted-foreground">
             {account._count.transactions} Transactions
@@ -41,9 +43,6 @@ const AccountPage = async ({ params }: AccountPageProps) => {
         </div>
       </div>
 
-      {/* Chart section */}
-
-      {/* Transaction Table */}
       <Suspense
         fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
       >
@@ -51,6 +50,4 @@ const AccountPage = async ({ params }: AccountPageProps) => {
       </Suspense>
     </div>
   );
-};
-
-export default AccountPage;
+}

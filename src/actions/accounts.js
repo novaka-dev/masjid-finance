@@ -96,6 +96,7 @@ export async function bulkDeleteTransactions(transactionIds) {
 
     if (!user) throw new Error("User not found");
 
+    // Ambil semua transaksi yang akan dihapus
     const transactions = await db.transaction.findMany({
       where: {
         id: { in: transactionIds },
@@ -107,15 +108,10 @@ export async function bulkDeleteTransactions(transactionIds) {
       return { success: false, error: "No transactions found" };
     }
 
-    const accountBalanceChanges = transactions.reduce((acc, transaction) => {
-      const change =
-        transaction.type === "EXPENSE"
-          ? -transaction.amount // Jika EXPENSE dihapus, saldo harus bertambah (karena mengurangi pengeluaran)
-          : transaction.amount; // Jika INCOME dihapus, saldo harus berkurang (karena mengurangi pemasukan)
-
-      acc[transaction.accountId] = (acc[transaction.accountId] || 0) + change;
-      return acc;
-    }, {});
+    // Ambil semua accountId unik dari transaksi yang dihapus
+    const affectedAccountIds = [
+      ...new Set(transactions.map((t) => t.accountId)),
+    ];
 
     await db.$transaction(async (tx) => {
       // Hapus transaksi terlebih dahulu
@@ -126,15 +122,16 @@ export async function bulkDeleteTransactions(transactionIds) {
         },
       });
 
-      // Perbarui saldo akun setelah transaksi dihapus
-      for (const [accountId] of Object.entries(accountBalanceChanges)) {
+      // Recalculate saldo untuk setiap akun terkait
+      for (const accountId of affectedAccountIds) {
         const remainingTransactions = await tx.transaction.findMany({
           where: { accountId },
-          orderBy: { date: "asc" }, // Urutkan transaksi untuk mendapatkan saldo akhir
+          orderBy: { date: "asc" }, // untuk jaga-jaga urutan
         });
 
         const newBalance = remainingTransactions.reduce((total, t) => {
-          return t.type === "EXPENSE" ? total - t.amount : total + t.amount;
+          const amount = Number(t.amount);
+          return t.type === "EXPENSE" ? total - amount : total + amount;
         }, 0);
 
         await tx.account.update({
@@ -144,14 +141,13 @@ export async function bulkDeleteTransactions(transactionIds) {
       }
     });
 
+    // Refresh halaman
     revalidatePath("/dashboard");
     revalidatePath("/account/[id]");
 
     return { success: true };
   } catch (error) {
+    console.error("Delete Error:", error);
     return { success: false, error: error.message };
   }
 }
-
-// Pastikan semua fungsi diexport dengan benar
-export { getAccountWithTransactions };

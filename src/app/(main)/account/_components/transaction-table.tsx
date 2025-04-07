@@ -32,6 +32,8 @@ import { format } from "date-fns";
 import {
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   MoreHorizontal,
   Search,
   Trash2,
@@ -55,6 +57,8 @@ interface TransactionTableProps {
   transactions: Transaction[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
 }) => {
@@ -67,14 +71,13 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     field: "date",
     direction: "desc",
   });
-
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredAndSortedTransactions = useMemo(() => {
     let result = [...transactions];
 
-    // Aply search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       result = result.filter((transaction) =>
@@ -82,17 +85,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       );
     }
 
-    // Apply type filter
     if (typeFilter) {
       result = result.filter(
         (transactions) => transactions.type === typeFilter
       );
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0;
-
       switch (sortConfig.field) {
         case "date":
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -112,6 +112,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return result;
   }, [transactions, sortConfig, searchTerm, typeFilter]);
 
+  const totalPages = Math.ceil(
+    filteredAndSortedTransactions.length / ITEMS_PER_PAGE
+  );
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedTransactions.slice(
+      startIndex,
+      startIndex + ITEMS_PER_PAGE
+    );
+  }, [filteredAndSortedTransactions, currentPage]);
+
   const handleSort = (field: keyof Transaction) => {
     setSortConfig((current) => ({
       field,
@@ -130,9 +142,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const handleAllSelect = () => {
     setSelectedIds((current) =>
-      current.length === transactions.length
+      current.length === paginatedTransactions.length
         ? []
-        : transactions.map((t) => t.id)
+        : paginatedTransactions.map((t) => t.id)
     );
   };
 
@@ -164,6 +176,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     setSearchTerm("");
     setTypeFilter("");
     setSelectedIds([]);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    setSelectedIds([]);
   };
 
   return (
@@ -178,13 +196,22 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           <Input
             placeholder="Search transactions..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-8"
           />
         </div>
 
         <div className="flex gap-2">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select
+            value={typeFilter}
+            onValueChange={(value) => {
+              setTypeFilter(value);
+              setCurrentPage(1);
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
@@ -226,8 +253,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 <Checkbox
                   onCheckedChange={handleAllSelect}
                   checked={
-                    selectedIds.length === transactions.length &&
-                    transactions.length > 0
+                    selectedIds.length === paginatedTransactions.length &&
+                    paginatedTransactions.length > 0
                   }
                 />
               </TableHead>
@@ -278,7 +305,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedTransactions.length === 0 ? (
+            {paginatedTransactions.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -288,7 +315,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedTransactions.map((transaction) => (
+              paginatedTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
                     <Checkbox
@@ -352,6 +379,31 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

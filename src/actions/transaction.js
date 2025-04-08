@@ -112,7 +112,7 @@ export async function getTransactions(id) {
 
   if (!user) throw new Error("User not found");
 
-  const transaction = await db.transaction.findMany({
+  const transaction = await db.transaction.findUnique({
     where: {
       id,
       userId: user.id,
@@ -160,12 +160,13 @@ export async function updateTransaction(id, data) {
     const netBalanceChange = newBalanceChange - oldBalanceChange;
 
     // Update transaksi dan account balance di transaksi
-    const transaction = await db.transaction(async (tx) => {
+    const transaction = await db.$transaction(async (tx) => {
       const updated = await tx.transaction.update({
         where: {
           id,
           userId: user.id,
         },
+        data,
       });
 
       // Update balance akun

@@ -11,7 +11,7 @@ import {
 import useFetch from "@/hooks/use-fetch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { createTransaction } from "@/actions/transaction";
+import { createTransaction, updateTransaction } from "@/actions/transaction";
 import { Input } from "@/components/ui/input";
 import CreateAccountSheet from "@/components/create-account-sheet";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -48,13 +48,20 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 interface AddTransactionFormProps {
   accounts: Account[];
   categories: Category[];
+  editMode?: boolean;
+  initialData?: TransactionFormData | null;
 }
 
 const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
   accounts,
   categories,
+  editMode = false,
+  initialData = null,
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+
   const {
     register,
     handleSubmit,
@@ -65,21 +72,31 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
     reset,
   } = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
-      type: "EXPENSE",
-      amount: "",
-      descriptions: "",
-      accountId: accounts.find((ac) => ac.isDefault)?.id || "",
-      date: new Date(),
-      category: "",
-    },
+    defaultValues:
+      editMode && initialData
+        ? {
+            type: initialData.type,
+            amount: initialData.amount.toString(),
+            descriptions: initialData.descriptions,
+            accountId: initialData.accountId,
+            date: new Date(initialData.date),
+            category: initialData.category,
+          }
+        : {
+            type: "EXPENSE",
+            amount: "",
+            descriptions: "",
+            accountId: accounts.find((ac) => ac.isDefault)?.id || "",
+            date: new Date(),
+            category: "",
+          },
   });
 
   const {
     loading: transactionLoading,
     fn: transactionFn,
     data: transactionResult,
-  } = useFetch(createTransaction);
+  } = useFetch(editMode ? updateTransaction : createTransaction);
 
   const type = watch("type");
   const date = watch("date");
@@ -95,17 +112,25 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
       amount: parseFloat(data.amount),
     };
 
-    await transactionFn(formData);
+    if (editMode) {
+      transactionFn(editId, formData);
+    } else {
+      transactionFn(formData);
+    }
   };
 
   useEffect(() => {
     if (transactionResult?.success && !transactionLoading) {
       // Perbaikan: gunakan `succes` jika itu yang dikembalikan oleh API
-      toast.success("Transaction created successfully");
+      toast.success(
+        editMode
+          ? "Transaction updated successfully"
+          : "Transaction created successfully"
+      );
       reset();
       router.push(`/account/${transactionResult.data.accountId}`);
     }
-  }, [transactionResult, transactionLoading, reset, router]);
+  }, [transactionResult, transactionLoading, reset, router, editMode]);
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -156,8 +181,12 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
             <SelectContent>
               {accounts.map((account) => (
                 <SelectItem key={account.id} value={account.id}>
-                  {account.name} ($
-                  {parseFloat(account.balance.toString()).toFixed(2)})
+                  {account.name} (
+                  {new Intl.NumberFormat("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                  }).format(account.balance)}
+                  )
                 </SelectItem>
               ))}
               <CreateAccountSheet>
@@ -250,7 +279,16 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
           Cancel
         </Button>
         <Button type="submit" className="w-full" disabled={transactionLoading}>
-          Create Transaction
+          {transactionLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {editMode ? "Updating..." : "Creating..."}
+            </>
+          ) : editMode ? (
+            "Update Transaction"
+          ) : (
+            "Create Transaction"
+          )}
         </Button>
       </div>
     </form>

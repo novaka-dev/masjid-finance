@@ -3,6 +3,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import aj from "@/lib/arcjet";
+import { request } from "@arcjet/next";
 
 // Fungsi untuk mengonversi amount dari Decimal ke number
 const serializeAmount = (obj) => ({
@@ -15,6 +17,33 @@ export async function createTransaction(data) {
     // Ambil userId dari auth
     const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
+
+    // Arcjet untuk membatasi jumlah transaksi
+    // Request data from arcjet
+    const req = await request();
+    // Cek limit rate
+    const decision = await aj.protect(req, {
+      userId,
+      requested: 1, //spesifi bagaimana token digunakan
+    });
+
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimited()) {
+        const { remaining, reset } = decision.reason;
+        console.error({
+          code: "RATE_LIMITED_EXCEEDED",
+          details: {
+            remaining,
+            resetInSeconds: reset,
+          },
+        });
+
+        throw new Error(
+          "Terlalu banyak memasukan transaksi, Mohon coba lagi nanti"
+        );
+      }
+      throw new Error("Terjadi kesalahan, Mohon coba lagi nanti");
+    }
 
     // Cari user berdasarkan clerkUserId
     const user = await db.user.findUnique({
@@ -70,5 +99,95 @@ export async function createTransaction(data) {
   } catch (error) {
     // Tangani error dan lempar pesan error yang lebih spesifik
     throw new Error(`Failed to create transaction: ${error.message}`);
+  }
+}
+
+export async function getTransactions(id) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  const user = await db.user.findUnique({
+    where: { clerkUserId: userId },
+  });
+
+  if (!user) throw new Error("User not found");
+
+  const transaction = await db.transaction.findMany({
+    where: {
+      id,
+      userId: user.id,
+    },
+  });
+
+  if (!transaction) throw new Error("Transaction not found");
+
+  return serializeAmount(transaction);
+}
+
+export async function updateTransaction(id, data) {
+  try {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+
+    const user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!user) throw new Error("User not found");
+
+    // Get original transaction untuk mengubah perubahan
+    const originalTransaction = await db.transaction.findUnique({
+      where: {
+        id,
+        userId: user.id,
+      },
+      include: {
+        account: true,
+      },
+    });
+
+    if (!originalTransaction) throw new Error("Transaction not found");
+
+    // Hitung perubahan balance berdasarkan tipe transaksi
+    const oldBalanceChange =
+      originalTransaction.type === "EXPENSE"
+        ? -originalTransaction.amount.toNumber()
+        : originalTransaction.amount.toNumber();
+
+    const newBalanceChange =
+      data.type === "EXPENSE" ? -data.amount : data.amount;
+
+    const netBalanceChange = newBalanceChange - oldBalanceChange;
+
+    // Update transaksi dan account balance di transaksi
+    const transaction = await db.transaction(async (tx) => {
+      const updated = await tx.transaction.update({
+        where: {
+          id,
+          userId: user.id,
+        },
+      });
+
+      // Update balance akun
+      await tx.account.update({
+        where: {
+          id: data.accountId,
+        },
+        data: {
+          balance: {
+            increment: netBalanceChange,
+          },
+        },
+      });
+
+      return updated;
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/account/${data.accountId}`);
+
+    return { success: true, data: serializeAmount(transaction) };
+  } catch (error) {
+    throw new Error(`Failed to update transaction: ${error.message}`);
   }
 }

@@ -54,7 +54,7 @@ const AccountChart = ({ transactions }: AccountChartProps) => {
     setHasMounted(true);
   }, []);
 
-  const filteredData: GroupedData[] = useMemo(() => {
+  const filteredData: (GroupedData & { label: string })[] = useMemo(() => {
     if (!hasMounted) return [];
 
     const range = DATE_RANGE[dateRange];
@@ -74,7 +74,7 @@ const AccountChart = ({ transactions }: AccountChartProps) => {
 
         if (!acc[dateKey]) {
           acc[dateKey] = {
-            date: format(new Date(transaction.date), "MMM dd"),
+            date: dateKey, // Simpan format aman untuk sorting
             income: 0,
             expense: 0,
           };
@@ -91,9 +91,12 @@ const AccountChart = ({ transactions }: AccountChartProps) => {
       {}
     );
 
-    return Object.values(grouped).sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    return Object.values(grouped)
+      .map((entry) => ({
+        ...entry,
+        label: format(new Date(entry.date), "MMM dd"), // Tambahkan label baru
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions, dateRange, hasMounted]);
 
   const totals = useMemo(() => {
@@ -181,7 +184,7 @@ const AccountChart = ({ transactions }: AccountChartProps) => {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" />
+              <XAxis dataKey="label" />
               <YAxis
                 fontSize={12}
                 tickLine={false}

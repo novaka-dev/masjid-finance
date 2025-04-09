@@ -20,30 +20,30 @@ export async function createTransaction(data) {
 
     // Arcjet untuk membatasi jumlah transaksi
     // Request data from arcjet
-    const req = await request();
-    // Cek limit rate
-    const decision = await aj.protect(req, {
-      userId,
-      requested: 1, //spesifi bagaimana token digunakan
-    });
+    // const req = await request();
+    //  Cek limit rate
+    // const decision = await aj.protect(req, {
+    //   userId,
+    //   requested: 1, //spesifi bagaimana token digunakan
+    // });
 
-    if (decision.isDenied()) {
-      if (decision.reason.isRateLimited()) {
-        const { remaining, reset } = decision.reason;
-        console.error({
-          code: "RATE_LIMITED_EXCEEDED",
-          details: {
-            remaining,
-            resetInSeconds: reset,
-          },
-        });
+    // if (decision.isDenied()) {
+    //   if (decision.reason.isRateLimited()) {
+    //     const { remaining, reset } = decision.reason;
+    //     console.error({
+    //       code: "RATE_LIMITED_EXCEEDED",
+    //       details: {
+    //         remaining,
+    //         resetInSeconds: reset,
+    //       },
+    //     });
 
-        throw new Error(
-          "Terlalu banyak memasukan transaksi, Mohon coba lagi nanti"
-        );
-      }
-      throw new Error("Terjadi kesalahan, Mohon coba lagi nanti");
-    }
+    //     throw new Error(
+    //       "Terlalu banyak memasukan transaksi, Mohon coba lagi nanti"
+    //     );
+    //   }
+    //   throw new Error("Terjadi kesalahan, Mohon coba lagi nanti");
+    // }
 
     // Cari user berdasarkan clerkUserId
     const user = await db.user.findUnique({

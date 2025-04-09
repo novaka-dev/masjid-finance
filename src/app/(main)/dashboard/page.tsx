@@ -1,17 +1,23 @@
-import { getUserAccounts } from "@/actions/dashboard";
+import { getDashboardData, getUserAccounts } from "@/actions/dashboard";
 import CreateAccountSheet from "@/components/create-account-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import React from "react";
+import React, { Suspense } from "react";
 import AccountCard from "./_components/account-card";
+import DashboardOverview from "./_components/transaction-overview";
 
 async function DashboardPage() {
   const accounts = await getUserAccounts();
+
+  const transaction = await getDashboardData();
   return (
     <div className="px-5">
       {/* Budget Progress */}
 
       {/* Overview */}
+      <Suspense fallback={"Loading overview"}>
+        <DashboardOverview accounts={accounts} transactions={transaction} />
+      </Suspense>
 
       {/* Accounts Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

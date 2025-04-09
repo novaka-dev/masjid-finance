@@ -8,7 +8,7 @@ const aj = arcjet({
       mode: "LIVE",
       characteristics: ["userId"], // track berdasarkan clerk userId
       refillRate: 10,
-      interval: 1800, 
+      interval: 1800,
       capacity: 10,
     }),
   ],

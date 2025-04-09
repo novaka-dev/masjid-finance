@@ -1,41 +1,39 @@
 import { getUserAccounts } from "@/actions/dashboard";
-import React from "react";
 import AddTransactionForm from "../_components/transaction-form";
-import { defaultCategories } from "@/data/category"; // Pastikan tipe Account dan Category sudah didefinisikan
+import { defaultCategories } from "@/data/category";
 import { getTransactions } from "@/actions/transaction";
 
-interface AddTransactionPageProps {
-  searchParams?: Record<string, string | string[] | undefined>;
-}
+export const dynamic = "force-dynamic";
 
-const AddTransactionPage = async ({
+export default async function AddTransactionPage({
   searchParams,
-}: AddTransactionPageProps) => {
-  // Memanggil getUserAccounts sebagai fungsi
-  const accounts = await getUserAccounts();
+}: {
+  searchParams: { edit?: string };
+}) {
+  // Gunakan metode ini untuk mengakses searchParams
+  const search = await new Promise<{ edit?: string }>((resolve) => {
+    resolve(searchParams);
+  });
+  
+  const edit = search.edit;
 
-  const editId = searchParams?.edit;
-
-  let initialData = null;
-  if (editId) {
-    const transaction = await getTransactions(editId);
-    initialData = transaction;
-  }
+  const [accounts, transaction] = await Promise.all([
+    getUserAccounts(),
+    edit ? getTransactions(edit) : Promise.resolve(null),
+  ]);
 
   return (
     <div className="px-5 max-w-2xl mx-auto">
       <h1 className="text-5xl text-black font-extrabold mb-8">
-        {editId ? "Edit Transaction" : "Add Transaction"}
+        {edit ? "Edit Transaction" : "Add Transaction"}
       </h1>
-
       <AddTransactionForm
         accounts={accounts}
         categories={defaultCategories}
-        editMode={!!editId}
-        initialData={initialData}
+        editMode={!!edit}
+        initialData={transaction || undefined}
+        editId={edit}
       />
     </div>
   );
-};
-
-export default AddTransactionPage;
+}

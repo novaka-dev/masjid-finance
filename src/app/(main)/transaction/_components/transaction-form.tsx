@@ -24,7 +24,7 @@ import {
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -50,6 +50,7 @@ interface AddTransactionFormProps {
   categories: Category[];
   editMode?: boolean;
   initialData?: TransactionFormData | null;
+  editId?: string; // Tambahkan prop ini
 }
 
 const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
@@ -57,10 +58,9 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
   categories,
   editMode = false,
   initialData = null,
+  editId, // Terima prop dari parent
 }) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const editId = searchParams.get("edit");
 
   const {
     register,
@@ -112,7 +112,8 @@ const AddTransactionForm: React.FC<AddTransactionFormProps> = ({
       amount: parseFloat(data.amount),
     };
 
-    if (editMode) {
+    if (editMode && editId) {
+      // Gunakan editId dari prop
       transactionFn(editId, formData);
     } else {
       transactionFn(formData);

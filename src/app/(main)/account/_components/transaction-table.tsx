@@ -55,12 +55,14 @@ interface Transaction {
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  role: "ADMIN" | "USER";
 }
 
 const ITEMS_PER_PAGE = 10;
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
+  role,
 }) => {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -229,7 +231,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </SelectContent>
           </Select>
 
-          {selectedIds.length > 0 && (
+          {role === "ADMIN" && selectedIds.length > 0 && (
             <div className="flex items-center gap-2">
               <Button variant={"destructive"} onClick={handleBulkDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -257,15 +259,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox
-                  onCheckedChange={handleAllSelect}
-                  checked={
-                    selectedIds.length === paginatedTransactions.length &&
-                    paginatedTransactions.length > 0
-                  }
-                />
-              </TableHead>
+              {role === "ADMIN" && (
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    onCheckedChange={handleAllSelect}
+                    checked={
+                      selectedIds.length === paginatedTransactions.length &&
+                      paginatedTransactions.length > 0
+                    }
+                  />
+                </TableHead>
+              )}
+
               <TableHead
                 className="cursor-pointer"
                 onClick={() => handleSort("date")}
@@ -325,12 +330,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             ) : (
               paginatedTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
-                  <TableCell>
-                    <Checkbox
-                      onCheckedChange={() => handleSelect(transaction.id)}
-                      checked={selectedIds.includes(transaction.id)}
-                    />
-                  </TableCell>
+                  {role === "ADMIN" && (
+                    <TableCell>
+                      <Checkbox
+                        onCheckedChange={() => handleSelect(transaction.id)}
+                        checked={selectedIds.includes(transaction.id)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     {format(new Date(transaction.date), "PP")}
                   </TableCell>
@@ -355,31 +362,33 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     {formatRupiah(transaction.amount)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4 " />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(
-                              `/transaction/create?edit=${transaction.id}`
-                            )
-                          }
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => deleteFn([transaction.id])}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {role === "ADMIN" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4 " />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(
+                                `/transaction/create?edit=${transaction.id}`
+                              )
+                            }
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => deleteFn([transaction.id])}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

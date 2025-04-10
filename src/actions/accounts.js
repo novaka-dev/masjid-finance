@@ -50,19 +50,20 @@ export async function updateDefaultAccount(accountId) {
 }
 
 // Fungsi untuk mengambil akun beserta transaksinya
-export async function getAccountWithTransactions(accountId) {
+export async function getAccountWithTransactions(
+  accountId, userId, role
+) {
   try {
-    const { userId } = await auth();
     if (!userId) throw new Error("Unauthorized");
 
-    const user = await db.user.findUnique({
-      where: { clerkUserId: userId },
-    });
-
-    if (!user) throw new Error("User not found");
-
-    const account = await db.account.findUnique({
-      where: { id: accountId, userId: user.id },
+    const account = await db.account.findFirst({
+      where: {
+        id: accountId,
+        OR: [
+          { userId }, // akun milik user
+          role === "USER" ? { user: { role: "ADMIN" } } : {}, // akun milik admin, hanya bisa dilihat user
+        ],
+      },
       include: {
         transactions: {
           orderBy: { date: "desc" },
@@ -80,7 +81,8 @@ export async function getAccountWithTransactions(accountId) {
       transactions: account.transactions.map(serializeTransaction),
     };
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error("Error getAccountWithTransactions:", error);
+    return null;
   }
 }
 

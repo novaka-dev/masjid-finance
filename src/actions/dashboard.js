@@ -4,6 +4,7 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
+// Serialize angka dari BigInt / Decimal
 const serializeTransaction = (obj) => {
   const serialized = { ...obj };
 
@@ -17,6 +18,7 @@ const serializeTransaction = (obj) => {
   return serialized;
 };
 
+// 🟢 Create Account (khusus admin)
 export async function createAccount(data) {
   try {
     const { userId } = await auth();
@@ -26,17 +28,13 @@ export async function createAccount(data) {
       where: { clerkUserId: userId },
     });
 
-    if (!user) {
-      throw new Error("User not found");
-    }
+    if (!user) throw new Error("User not found");
 
-    // conver balance to float before saving
     const balanceFloat = parseFloat(data.balance);
     if (isNaN(balanceFloat)) {
       throw new Error("Invalid balance amount");
     }
 
-    // Cek jika ini adalah akun pertama yang dibuat (default account)
     const exitingAccounts = await db.account.findMany({
       where: { userId: user.id },
     });
@@ -44,7 +42,6 @@ export async function createAccount(data) {
     const shouldBeDefault =
       exitingAccounts.length === 0 ? true : data.isDefault;
 
-    // If this account should be default, unset other default accounts
     if (shouldBeDefault) {
       await db.account.updateMany({
         where: { userId: user.id },
@@ -64,12 +61,13 @@ export async function createAccount(data) {
     const serializedAccount = serializeTransaction(account);
 
     revalidatePath("/dashboard");
-    return { seuccess: true, data: serializedAccount };
+    return { success: true, data: serializedAccount };
   } catch (error) {
     throw new Error(error.message);
   }
 }
 
+// 🟢 Get All Accounts (Admin: akun sendiri, User: akun sendiri + akun admin)
 export async function getUserAccounts() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -78,12 +76,20 @@ export async function getUserAccounts() {
     where: { clerkUserId: userId },
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
   const accounts = await db.account.findMany({
-    where: { userId: user.id },
+    where:
+      user.role === "ADMIN"
+        ? { userId: user.id }
+        : {
+            OR: [
+              { userId: user.id },
+              {
+                user: { role: "ADMIN" },
+              },
+            ],
+          },
     orderBy: { createAt: "desc" },
     include: {
       _count: {
@@ -93,10 +99,11 @@ export async function getUserAccounts() {
       },
     },
   });
-  const serializedAccount = accounts.map(serializeTransaction);
-  return serializedAccount;
+
+  return accounts.map(serializeTransaction);
 }
 
+// 🟢 Get Dashboard Transactions (Admin: transaksi sendiri, User: transaksi sendiri + admin)
 export async function getDashboardData() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -105,14 +112,22 @@ export async function getDashboardData() {
     where: { clerkUserId: userId },
   });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
+  if (!user) throw new Error("User not found");
 
-  // Get all user account
-  const transaction = await db.transaction.findMany({
-    where: { userId: user.id },
+  const transactions = await db.transaction.findMany({
+    where:
+      user.role === "ADMIN"
+        ? { userId: user.id }
+        : {
+            OR: [
+              { userId: user.id },
+              {
+                user: { role: "ADMIN" },
+              },
+            ],
+          },
     orderBy: { date: "desc" },
-  })
-  return transaction.map(serializeTransaction)
+  });
+
+  return transactions.map(serializeTransaction);
 }

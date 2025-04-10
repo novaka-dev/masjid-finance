@@ -12,7 +12,9 @@ import { LayoutDashboard, PenBox } from "lucide-react";
 import { checkUser } from "@/lib/checkUser";
 
 const Header = async () => {
-  await checkUser();
+  const user = await checkUser(); // ambil user dari DB
+  const role = user?.role ?? "USER"; // fallback ke "USER"
+
   return (
     <div className="fixed top-0 w-full bg-white/50 backdrop-blur-md z-50 border-b ">
       <nav className="container mx-auto px-10 py-4 flex justify-between items-center">
@@ -38,12 +40,15 @@ const Header = async () => {
               </Button>
             </Link>
 
-            <Link href="/transaction/create">
-              <Button className="flex items-center gap-2">
-                <PenBox size={18} />
-                <span className="hidden md:inline">Add Transaction</span>
-              </Button>
-            </Link>
+            {/* 🔒 Hanya tampil kalau admin */}
+            {role === "ADMIN" && (
+              <Link href="/transaction/create">
+                <Button className="flex items-center gap-2">
+                  <PenBox size={18} />
+                  <span className="hidden md:inline">Add Transaction</span>
+                </Button>
+              </Link>
+            )}
           </SignedIn>
 
           <SignedOut>
@@ -51,6 +56,7 @@ const Header = async () => {
               <Button className="bg-yellow-500">Login</Button>
             </SignInButton>
           </SignedOut>
+
           <SignedIn>
             <UserButton
               appearance={{

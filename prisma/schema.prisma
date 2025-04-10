@@ -20,6 +20,7 @@ model User {
   email        String        @unique
   name         String?
   imageUrl     String?
+  role         Role          @default(USER) // ENUM
   transactions Transaction[]
   accounts     Account[]
   budgets      Budget[]
@@ -27,6 +28,11 @@ model User {
   updateAt     DateTime      @updatedAt
 
   @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
 }
 
 model Account {

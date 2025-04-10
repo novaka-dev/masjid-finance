@@ -15,6 +15,9 @@ import { updateDefaultAccount } from "@/actions/accounts";
 import { toast } from "sonner";
 import { useEffect } from "react";
 
+// Tambahkan tipe role
+type UserRole = "ADMIN" | "USER";
+
 interface Account {
   id: string;
   name: string;
@@ -23,7 +26,12 @@ interface Account {
   isDefault: boolean;
 }
 
-const AccountCard: React.FC<{ account: Account }> = ({ account }) => {
+interface AccountCardProps {
+  account: Account;
+  userRole: UserRole; // Tambahkan role sebagai prop
+}
+
+const AccountCard: React.FC<AccountCardProps> = ({ account, userRole }) => {
   const { name, balance, type, id, isDefault } = account;
 
   const {
@@ -39,7 +47,7 @@ const AccountCard: React.FC<{ account: Account }> = ({ account }) => {
     event.preventDefault();
     if (isDefault) {
       toast.warning("You need at least 1 default account");
-      return; // Don't allow toggling off the default account
+      return;
     }
 
     await updateDefaultFn(id);
@@ -67,7 +75,7 @@ const AccountCard: React.FC<{ account: Account }> = ({ account }) => {
           <Switch
             checked={isDefault}
             onClick={handleDefaultChange}
-            disabled={updateDefaultLoading}
+            disabled={updateDefaultLoading || userRole !== "ADMIN"} // hanya admin yang bisa toggle
           />
         </CardHeader>
         <CardContent>

@@ -1,31 +1,44 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "./prisma";
+import { Role } from "@prisma/client";
 
 export const checkUser = async () => {
-  const user = await currentUser();
+  const { userId } = await auth();
 
-  if (!user) {
-    return null;
-  }
+  if (!userId) return null;
 
   try {
     const loggedInUser = await db.user.findUnique({
       where: {
-        clerkUserId: user.id,
+        clerkUserId: userId,
       },
     });
 
-    if (loggedInUser) {
-      return loggedInUser;
-    }
+    if (loggedInUser) return loggedInUser;
 
-    const name = `${user.firstName} ${user.lastName}`;
+    // Kalau belum ada user di database, kita ambil info via Clerk API
+    const response = await fetch(`https://api.clerk.dev/v1/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`,
+      },
+    });
+
+    const user = await response.json();
+
+    const name = `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim();
+
+    const roleFromMetadata = (
+      user.public_metadata?.role as string
+    )?.toUpperCase();
+    const role: Role = roleFromMetadata === "ADMIN" ? "ADMIN" : "USER";
+
     const newUser = await db.user.create({
       data: {
         clerkUserId: user.id,
         name,
-        imageUrl: user.imageUrl,
-        email: user.emailAddresses[0].emailAddress,
+        imageUrl: user.image_url,
+        email: user.email_addresses[0].email_address,
+        role,
       },
     });
 

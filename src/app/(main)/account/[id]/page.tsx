@@ -1,11 +1,10 @@
-// src/app/(main)/account/[id]/page.tsx
-
 import { getAccountWithTransactions } from "@/actions/accounts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import TransactionTable from "../_components/transaction-table";
 import { BarLoader } from "react-spinners";
 import AccountChart from "../_components/account-chart";
+import { checkUser } from "@/lib/checkUser";
 
 interface AccountPageProps {
   params: {
@@ -14,10 +13,13 @@ interface AccountPageProps {
 }
 
 export default async function AccountPage({ params }: AccountPageProps) {
-  const accountData = await getAccountWithTransactions(params.id);
-  if (!accountData) {
-    notFound();
-  }
+  const user = await checkUser();
+  const role = user?.role ?? "USER"; // fallback role
+  const userId = user?.id ?? ""; // asumsi ini adalah ID dari tabel `users` kamu
+
+  // 🔧 Update ini: lempar userId dan role ke function getAccountWithTransactions
+  const accountData = await getAccountWithTransactions(params.id, userId, role);
+  if (!accountData) notFound();
 
   const { transactions, ...account } = accountData;
 
@@ -52,18 +54,16 @@ export default async function AccountPage({ params }: AccountPageProps) {
         </div>
       </div>
 
-      {/* Chart section */}
       <Suspense
         fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
       >
         <AccountChart transactions={transactions} />
       </Suspense>
 
-      {/* Transaction Table */}
       <Suspense
         fallback={<BarLoader className="mt-4" width={"100%"} color="#9333ea" />}
       >
-        <TransactionTable transactions={transactions} />
+        <TransactionTable transactions={transactions} role={role} />
       </Suspense>
     </div>
   );

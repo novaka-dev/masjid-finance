@@ -46,7 +46,6 @@ const CreateAccountSheet = ({ children }: { children: React.ReactNode }) => {
     defaultValues: {
       name: "",
       type: "CURRENT",
-      balance: "",
       isDefault: false,
     },
   });
@@ -128,7 +127,7 @@ const CreateAccountSheet = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             {/* Input Initial Balance */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <label htmlFor="balance" className="text-sm font-medium">
                 Initial Balance
               </label>
@@ -142,7 +141,7 @@ const CreateAccountSheet = ({ children }: { children: React.ReactNode }) => {
               {errors.balance && (
                 <p className="text-red-500">{errors.balance.message}</p>
               )}
-            </div>
+            </div> */}
 
             {/* Switch Set as Default */}
             <div className="space-y-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
@@ -151,6 +150,7 @@ const CreateAccountSheet = ({ children }: { children: React.ReactNode }) => {
                 className="text-sm font-medium cursor-pointer"
               >
                 Set as default
+
               </label>
 
               <div className="flex items-center justify-between">

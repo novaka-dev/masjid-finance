@@ -30,11 +30,6 @@ export async function createAccount(data) {
 
     if (!user) throw new Error("User not found");
 
-    const balanceFloat = parseFloat(data.balance);
-    if (isNaN(balanceFloat)) {
-      throw new Error("Invalid balance amount");
-    }
-
     const exitingAccounts = await db.account.findMany({
       where: { userId: user.id },
     });
@@ -51,10 +46,11 @@ export async function createAccount(data) {
 
     const account = await db.account.create({
       data: {
-        ...data,
-        balance: balanceFloat,
-        userId: user.id,
+        name: data.name,
+        type: data.type,
         isDefault: shouldBeDefault,
+        balance: 0, // 👈 Default balance
+        userId: user.id,
       },
     });
 

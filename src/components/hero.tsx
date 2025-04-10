@@ -32,9 +32,9 @@ const HeroSection = () => {
         <div>
           <div>
             <Image
-              src="/baner-masjid.jpg"
+              src="/masjid-hero.png"
               alt="banner"
-              width={1100}
+              width={1200}
               height={720}
               className="rounded-lg shadow-2xl border mx-auto"
               priority

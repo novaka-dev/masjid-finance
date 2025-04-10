@@ -1,23 +1,25 @@
-import { UserButton } from "@clerk/nextjs";
+"use client";
 
-import { SignInButton } from "@clerk/nextjs";
-
-import { SignedOut } from "@clerk/nextjs";
-
-import { SignedIn } from "@clerk/nextjs";
-import Image from "next/image";
-import Link from "next/link";
+import {
+  UserButton,
+  SignInButton,
+  SignedIn,
+  SignedOut,
+  useUser,
+} from "@clerk/nextjs";
+import { LayoutDashboard, PenBox, Menu } from "lucide-react";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "./ui/button";
-import { LayoutDashboard, PenBox } from "lucide-react";
-import { checkUser } from "@/lib/checkUser";
+import Link from "next/link";
+import Image from "next/image";
 
-const Header = async () => {
-  const user = await checkUser(); // ambil user dari DB
-  const role = user?.role ?? "USER"; // fallback ke "USER"
+const Header = ({ role }: { role: "ADMIN" | "USER" }) => {
+  const { user } = useUser();
 
   return (
-    <div className="fixed top-0 w-full bg-white/50 backdrop-blur-md z-50 border-b ">
-      <nav className="container mx-auto px-10 py-4 flex justify-between items-center">
+    <div className="fixed top-0 w-full bg-white/50 backdrop-blur-md z-50 border-b">
+      <nav className="container mx-auto px-4 md:px-10 py-4 flex justify-between items-center">
+        {/* Logo */}
         <Link href="/">
           <Image
             src={"/logo-finall.png"}
@@ -28,24 +30,21 @@ const Header = async () => {
           />
         </Link>
 
-        <div className="items-center space-x-4 flex ">
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center space-x-4">
           <SignedIn>
-            <Link
-              href="/dashboard"
-              className="flex text-gray-600 hover:text-blue-600 items-center gap-2"
-            >
-              <Button variant={"outline"}>
+            <Link href="/dashboard">
+              <Button variant="outline" className="flex items-center gap-2">
                 <LayoutDashboard size={18} />
-                <span className="hidden md:inline">Dashboard</span>
+                Dashboard
               </Button>
             </Link>
 
-            {/* 🔒 Hanya tampil kalau admin */}
             {role === "ADMIN" && (
               <Link href="/transaction/create">
                 <Button className="flex items-center gap-2">
                   <PenBox size={18} />
-                  <span className="hidden md:inline">Add Transaction</span>
+                  Add Transaction
                 </Button>
               </Link>
             )}
@@ -66,6 +65,71 @@ const Header = async () => {
               }}
             />
           </SignedIn>
+        </div>
+
+        {/* Mobile */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="flex flex-col items-center text-center p-6 space-y-6"
+            >
+              <SheetHeader>
+                <SheetTitle className="text-lg font-semibold">Masjid Al-Kautsar</SheetTitle>
+              </SheetHeader>
+              {/* Avatar & Email */}
+              <SignedIn>
+                <div className="flex flex-col items-center space-y-2 mt-4">
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        avatarBox:
+                          "w-16 h-16 border-2 border-gray-300 shadow-md",
+                      },
+                    }}
+                  />
+                  <p className="text-sm text-gray-800 font-medium">
+                    {user?.primaryEmailAddress?.emailAddress || user?.fullName}
+                  </p>
+                </div>
+              </SignedIn>
+
+              {/* Menu Items */}
+              <div className="w-full flex flex-col items-center space-y-3">
+                <SignedIn>
+                  <Link href="/dashboard" className="w-full">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2"
+                    >
+                      <LayoutDashboard size={18} />
+                      Dashboard
+                    </Button>
+                  </Link>
+
+                  {role === "ADMIN" && (
+                    <Link href="/transaction/create" className="w-full">
+                      <Button className="w-full justify-start gap-2">
+                        <PenBox size={18} />
+                        Add Transaction
+                      </Button>
+                    </Link>
+                  )}
+                </SignedIn>
+
+                <SignedOut>
+                  <SignInButton forceRedirectUrl={"/dashboard"}>
+                    <Button className="w-full bg-yellow-500">Login</Button>
+                  </SignInButton>
+                </SignedOut>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>

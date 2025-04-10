@@ -15,12 +15,12 @@ import React, { useState } from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 const colors = [
-  "#FF0000",
-  "#FF7F00",
-  "#FFFF00",
-  "#00FF00",
-  "#0000FF",
-  "#8B00FF",
+  "#4F46E5", // Indigo - elegan dan modern
+  "#06B6D4", // Cyan - segar dan dinamis
+  "#10B981", // Emerald - adem dan sejuk
+  "#F59E0B", // Amber - hangat dan bersahabat
+  "#EF4444", // Rose - tajam tapi tetap soft
+  "#8B5CF6", // Violet - mewah dan menenangkan
 ];
 
 // Update tipe Transaction untuk menyertakan category
@@ -176,6 +176,7 @@ const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
+                  style={{ fontSize: "12px" }}
                     data={pieChartData}
                     cx="50%"
                     cy="50%"

@@ -97,3 +97,10 @@ export const defaultCategories = [
     subcategories: ["Movies", "Games", "Streaming Services"],
   },
 ];
+
+export const categoryColors = defaultCategories.reduce<{
+  [key: string]: string;
+}>((acc, category) => {
+  acc[category.id] = category.color;
+  return acc;
+}, {});

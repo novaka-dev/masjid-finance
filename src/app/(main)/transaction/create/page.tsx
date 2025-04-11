@@ -2,20 +2,26 @@ import { getUserAccounts } from "@/actions/dashboard";
 import AddTransactionForm from "../_components/transaction-form";
 import { defaultCategories } from "@/data/category";
 import { getTransactions } from "@/actions/transaction";
+import { redirect } from "next/navigation";
+import { checkUser } from "@/lib/checkUser";
 
 export const dynamic = "force-dynamic";
+
 
 export default async function AddTransactionPage({
   searchParams,
 }: {
   searchParams: { edit?: string };
 }) {
-  // Gunakan metode ini untuk mengakses searchParams
-  const search = await new Promise<{ edit?: string }>((resolve) => {
-    resolve(searchParams);
-  });
-  
-  const edit = search.edit;
+  // ✅ Ambil user dari DB
+  const user = await checkUser();
+
+  // ✅ Cek akses user
+  if (!user || user.role !== "ADMIN") {
+    redirect("/unauthorized");
+  }
+
+  const edit = searchParams.edit;
 
   const [accounts, transaction] = await Promise.all([
     getUserAccounts(),

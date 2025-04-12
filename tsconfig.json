@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,14 +14,12 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [
-      // {
-      //   "name": "next"
-      // }
+      {
+        "name": "next"
+      }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
@@ -42,6 +36,9 @@
     "src/app/(main)/transaction/_components/transaction-form.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    "**/.next",
+    ".next/types/**/*.ts" // 🧠 fix error typing build! ]
   ]
 }

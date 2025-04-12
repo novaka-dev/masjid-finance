@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 import { getAccountWithTransactions } from "@/actions/accounts";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -6,20 +9,18 @@ import { BarLoader } from "react-spinners";
 import AccountChart from "../_components/account-chart";
 import { checkUser } from "@/lib/checkUser";
 
-// ✅ Menggunakan langsung params tanpa await
-export default async function AccountPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  // Gunakan params langsung, tidak perlu async
-  const { id } = params; // params sudah tersedia saat halaman di-render
+type PageProps = {
+  params: {
+    id: string;
+  };
+};
 
+export default async function AccountPage({ params }: PageProps) {
   const user = await checkUser();
   const role = user?.role ?? "USER";
   const userId = user?.id ?? "";
 
-  const accountData = await getAccountWithTransactions(id, userId, role);
+  const accountData = await getAccountWithTransactions(params.id, userId, role);
   if (!accountData) notFound();
 
   const { transactions, ...account } = accountData;
@@ -33,7 +34,7 @@ export default async function AccountPage({
   };
 
   return (
-    <div className="px-5 space-y-8">
+    <div className="px-5 space-y-8 ">
       <div className="flex gap-4 items-end justify-between">
         <div>
           <h1 className="text-5xl sm:text-6xl font-extrabold text-black capitalize">

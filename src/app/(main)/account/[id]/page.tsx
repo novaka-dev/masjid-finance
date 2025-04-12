@@ -6,19 +6,20 @@ import { BarLoader } from "react-spinners";
 import AccountChart from "../_components/account-chart";
 import { checkUser } from "@/lib/checkUser";
 
-interface AccountPageProps {
-  params: {
-    id: string;
-  };
-}
+// ✅ Menggunakan langsung params tanpa await
+export default async function AccountPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  // Gunakan params langsung, tidak perlu async
+  const { id } = params; // params sudah tersedia saat halaman di-render
 
-export default async function AccountPage({ params }: AccountPageProps) {
   const user = await checkUser();
-  const role = user?.role ?? "USER"; // fallback role
-  const userId = user?.id ?? ""; // asumsi ini adalah ID dari tabel `users` kamu
+  const role = user?.role ?? "USER";
+  const userId = user?.id ?? "";
 
-  // 🔧 Update ini: lempar userId dan role ke function getAccountWithTransactions
-  const accountData = await getAccountWithTransactions(params.id, userId, role);
+  const accountData = await getAccountWithTransactions(id, userId, role);
   if (!accountData) notFound();
 
   const { transactions, ...account } = accountData;
@@ -32,7 +33,7 @@ export default async function AccountPage({ params }: AccountPageProps) {
   };
 
   return (
-    <div className="px-5 space-y-8 ">
+    <div className="px-5 space-y-8">
       <div className="flex gap-4 items-end justify-between">
         <div>
           <h1 className="text-5xl sm:text-6xl font-extrabold text-black capitalize">

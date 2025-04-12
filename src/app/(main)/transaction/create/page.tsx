@@ -7,11 +7,10 @@ import { checkUser } from "@/lib/checkUser";
 
 export const dynamic = "force-dynamic";
 
-
 export default async function AddTransactionPage({
   searchParams,
 }: {
-  searchParams: { edit?: string };
+  searchParams?: { edit?: string };
 }) {
   // ✅ Ambil user dari DB
   const user = await checkUser();
@@ -21,8 +20,10 @@ export default async function AddTransactionPage({
     redirect("/unauthorized");
   }
 
-  const edit = searchParams.edit;
+  // ✅ Ambil edit param (tidak perlu await, tidak perlu optional chaining)
+  const edit = searchParams?.edit;
 
+  // ✅ Ambil data accounts dan transaksi jika sedang edit
   const [accounts, transaction] = await Promise.all([
     getUserAccounts(),
     edit ? getTransactions(edit) : Promise.resolve(null),
